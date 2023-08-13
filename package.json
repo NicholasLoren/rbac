@@ -1,0 +1,17 @@
+{
+  "name": "rbac",
+  "version": "1.0.0",
+  "description": "A role base access control for users with MySQL and Node JS\r >This is to enable a user to create a project on top this if at all a user has mysql database and nodejs an the backend",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.18.2",
+    "joi": "^17.9.2",
+    "mysql": "^2.18.1"
+  }
+}
