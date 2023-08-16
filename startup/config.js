@@ -1,5 +1,7 @@
 const config = require('config')
 
 module.exports = function () {
-  return config.has('database') ? config.get('database') : null
+  const database =  config.has('database') ? config.get('database') : null
+  const jwtPrivateKey =  config.has('jwtPrivateKey') ? config.get('jwtPrivateKey') : null 
+  return { database, jwtPrivateKey }
 }

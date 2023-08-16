@@ -1,4 +1,8 @@
 const Joi = require('joi')
+const bcrypt = require('bcrypt')
+const jwt = require('jsonwebtoken')
+const { jwtPrivateKey } = require('../startup/config')()
+
 class Users {
   constructor(connection) {
     this.connection = connection
@@ -11,6 +15,7 @@ class Users {
    * @returns user[s]
    */
 
+  // ::: GET USER(S) :::
   get(id = null, callback) {
     if (id) {
       this.connection.query(
@@ -20,9 +25,13 @@ class Users {
       )
       return
     }
-    this.connection.query('SELECT * FROM `users`', callback)
+    this.connection.query(
+      'SELECT `users`.userName,`users`.displayName,`users`.email,`users`.contact,`users`.role_id,`roles`.name AS roleName FROM `users` JOIN `roles` ON `roles`.id = `users`.role_id',
+      callback
+    )
   }
 
+  //::: ADD AND UPDATE USER :::
   add(user, id, callback) {
     //validate the user object first
     const validation = this.validate(user, { allowUnknown: true })
@@ -30,12 +39,13 @@ class Users {
       return callback(validation.error.details[0].message, null)
     }
 
-    const { username, displayName, contact, email, password } = user
+    const { role_id, username, displayName, contact, email, password } = user
+
     //check if an email or username or contact already exists
     this.connection.query(
       'SELECT * FROM `users` WHERE email=? OR username=? OR contact=? LIMIT 1',
       [email, username, contact],
-      (err, result) => {
+      async (err, result) => {
         if (err) return callback(err, null)
 
         if (result.length === 1) {
@@ -52,41 +62,119 @@ class Users {
 
         if (id) {
           //perform an update
-          const { username, displayName, contact, email } = user
+          const { role_id, username, displayName, contact, email } = user
           this.connection.query(
             'UPDATE `users` SET `username`=?,`displayName`=?,`email`=?,`contact`=? WHERE `id` = ?',
             [username, displayName, contact, email, id],
             callback
           )
         } else {
-          //add new user
-          this.connection.query(
-            'INSERT INTO `users` (username,displayName,email,contact,password) VALUES (?,?,?,?,?)',
-            [username, displayName, email, contact, password],
-            (err, result) => {
-              return err ? callback(err, null) : callback(null, result)
-            }
-          )
+          //encrypt password before stored to the db
+          this.hashPassword(password)
+            .then((hashedPassword) => {
+              //add new user
+              this.connection.query(
+                'INSERT INTO `users` (role_id,username,displayName,email,contact,password) VALUES (?,?,?,?,?,?)',
+                [
+                  role_id,
+                  username,
+                  displayName,
+                  email,
+                  contact,
+                  hashedPassword,
+                ],
+                (err, result) => {
+                  return err ? callback(err, null) : callback(null, result)
+                }
+              )
+            })
+            .catch((error) => {
+              return callback(error, null)
+            })
         }
       }
     )
   }
 
-
-  delete(id,callback){
-    return this.connection.query("DELETE FROM `users` WHERE `id` = ?",[id],callback);
+  //::: DELETE USER :::
+  delete(id, callback) {
+    return this.connection.query(
+      'DELETE FROM `users` WHERE `id` = ?',
+      [id],
+      callback
+    )
   }
 
+  //::: LOGIN USER :::
+  login(user, callback) {
+    const validation = this.validate(user)
+    //validate email and password
+    if (validation.error)
+      return callback(validation.error.details[0].message, null)
+
+    //check if user exists
+    this.connection.query(
+      'SELECT users.*,roles.name AS roleName FROM `users` INNER JOIN roles ON roles.id = users.role_id WHERE `email` = ?',
+      [user.email],
+      (err, result) => {
+        if (err) return callback(err, null)
+        if (result.length === 0)
+          return callback('Invalid user credentials', null)
+
+        const userDetails = result[0]
+        //check the password if it's correct
+        this.verifyPassword(user.password, userDetails['password'])
+          .then(() => {
+            //remove the password field
+            delete userDetails['password']
+            return callback(null, { token: this.generateAuthToken(user), user })
+          })
+          .catch((error) => {
+            return callback('Invalid user credentials', null)
+          })
+      }
+    )
+  }
+
+  //::: VALIDATE USER :::
   validate(user, options = null) {
     const schema = Joi.object({
       username: Joi.string().min(3).max(255).trim().label('Username'),
       displayName: Joi.string().min(3).max(255).trim().label('Display name'),
       contact: Joi.string().min(3).max(255).trim().label('Contact'),
-      email: Joi.string().email().trim().label('Email'),
+      email: Joi.string().required().email().trim().label('Email'),
       password: Joi.string().min(6).max(255).trim().label('Password'),
     })
 
     return options ? schema.validate(user, options) : schema.validate(user)
+  }
+
+  //::: HASH PASSWORD :::
+  hashPassword(password) {
+    return new Promise((resolve, reject) => {
+      const saltRounds = 10
+      bcrypt.hash(password, saltRounds, (err, hash) => {
+        if (err) reject(err)
+        resolve(hash)
+      })
+    })
+  }
+
+  //::: VERIFY PASSWORD :::
+  verifyPassword(password, hashedPassword) {
+    return new Promise((resolve, reject) => {
+      bcrypt.compare(password, hashedPassword, (error, result) => {
+        return error ? reject(error) : resolve(result)
+      })
+    })
+  }
+
+  //::: GENERATE USER AUTH TOKEN :::
+  generateAuthToken(user) {
+    const secret = jwtPrivateKey
+    if (!secret) throw new Error('No private key found for jwt')
+
+    return jwt.sign(user, secret, { expiresIn: '6h' })
   }
 }
 

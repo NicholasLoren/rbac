@@ -1,8 +1,10 @@
 {
   "database": {
-    "password": "db_password",
-    "host": "db_host",
-    "user": "db_user",
-    "name": "db_name"
-  }
+    "password": "rbac_db_password",
+    "host": "rbac_db_host",
+    "user": "rbac_db_user",
+    "name": "rbac_db_name"
+  },
+  "jwtPrivateKey":"rbac_jwtPrivateKey"
 }
+ 

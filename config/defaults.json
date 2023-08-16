@@ -4,5 +4,6 @@
     "host": "",
     "user": "",
     "name": ""
-  }
+  },
+  "jwtPrivateKey":""
 }
