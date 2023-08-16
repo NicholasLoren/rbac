@@ -1,13 +1,13 @@
 const express = require("express")  
 const Users = require("./routes/Users")
 const app = express()
-const PORT = process.env.PORT || 3000
+const PORT = process.env.PORT || 3000 
 
 
 
 /** App middleware functions here 
  * Custoom routes and error handlers
-*/
+**/
 app.use(express.json())
 app.use('/users',Users)
 
@@ -19,3 +19,6 @@ app.get('/',(req,res)=>{
 app.listen(PORT,()=>{
     console.log(`listening on port ${PORT}`)
 })
+
+
+

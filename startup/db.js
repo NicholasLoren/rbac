@@ -1,22 +1,22 @@
 const mysql = require('mysql')
+const database = require('./config')()
+module.exports = function () {
+  if (!database) throw new Error('No database credentials provided')
 
-module.exports = function(){
   const dbConnection = mysql.createConnection({
-    host: 'localhost',
-    user: 'root',
-    password: '',
-    database: 'rbac',
+    host: database.host,
+    user: database.user,
+    password: database.password,
+    database: database.name,
   })
 
-   dbConnection.connect((err)=>{
-    if(err){
-        console.log("No database connection extablished")
-        return
-    } 
-    console.log("Connection established")
-
+  dbConnection.connect((err) => {
+    if (err) {
+      console.log('No database connection extablished')
+      throw err
+    }
+    console.log('Connection established')
   })
 
   return dbConnection
-
 }
