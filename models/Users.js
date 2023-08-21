@@ -4,6 +4,15 @@ const jwt = require('jsonwebtoken')
 const { jwtPrivateKey } = require('../startup/config')()
 
 class Users {
+  validateSchema = {
+    role_id: Joi.string().required().label('Role').trim(),
+    username: Joi.string().min(3).max(255).trim().label('Username'),
+    displayName: Joi.string().min(3).max(255).trim().label('Display name'),
+    contact: Joi.string().min(3).max(255).trim().label('Contact'),
+    email: Joi.string().required().email().trim().label('Email'),
+    password: Joi.string().min(6).max(255).trim().label('Password'),
+  }
+
   constructor(connection) {
     this.connection = connection
   }
@@ -34,7 +43,7 @@ class Users {
   //::: ADD AND UPDATE USER :::
   add(user, id, callback) {
     //validate the user object first
-    const validation = this.validate(user, { allowUnknown: true })
+    const validation = this.validate(user,this.validateSchema, { allowUnknown: true })
     if (validation.error) {
       return callback(validation.error.details[0].message, null)
     }
@@ -107,7 +116,8 @@ class Users {
 
   //::: LOGIN USER :::
   login(user, callback) {
-    const validation = this.validate(user)
+    const {email,password} = this.validateSchema 
+    const validation = this.validate(user,{email,password}, { allowUnknown: true })
     //validate email and password
     if (validation.error)
       return callback(validation.error.details[0].message, null)
@@ -119,7 +129,7 @@ class Users {
       (err, result) => {
         if (err) return callback(err, null)
         if (result.length === 0)
-          return callback('Invalid user credentials', null)
+          return callback('Invalid user credentials..', null)
 
         const userDetails = result[0]
         //check the password if it's correct
@@ -137,14 +147,8 @@ class Users {
   }
 
   //::: VALIDATE USER :::
-  validate(user, options = null) {
-    const schema = Joi.object({
-      username: Joi.string().min(3).max(255).trim().label('Username'),
-      displayName: Joi.string().min(3).max(255).trim().label('Display name'),
-      contact: Joi.string().min(3).max(255).trim().label('Contact'),
-      email: Joi.string().required().email().trim().label('Email'),
-      password: Joi.string().min(6).max(255).trim().label('Password'),
-    })
+  validate(user, validateSchema, options = null) {
+    const schema = Joi.object(validateSchema)
 
     return options ? schema.validate(user, options) : schema.validate(user)
   }

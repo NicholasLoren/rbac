@@ -23,7 +23,7 @@ route.get('/:id',auth, (req, res) => {
     if (err) {
       return res.status(500).send('Someting went wrong')
     }
-    res.send(result)
+    res.send(result.length==1?result[0]:{})
   })
 })
 

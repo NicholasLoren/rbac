@@ -15,7 +15,7 @@ class Roles {
       return
     }
 
-    this.connection.query('SELECT * FROM`roles`', callback)
+    this.connection.query('SELECT * FROM `roles`', callback)
   }
 
   //::: ADD or UPDATE ROLE :::
@@ -29,7 +29,7 @@ class Roles {
       //Update role
       this.connection.query(
         'UPDATE `roles` SET `name`=?, `description`=? WHERE `id` = ? LIMIT 1',
-        [id, name, description],
+        [ name, description,id],
         callback
       )
       return 

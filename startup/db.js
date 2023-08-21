@@ -1,10 +1,10 @@
-const mysql = require('mysql')
+const mysql = require('mysql') 
 const {database} = require('./config')()
 
 module.exports = function () {
   if (!database) {
     console.log('No database credentials provided')
-    return
+    process.exit(0) 
   }
 
   const dbConnection = mysql.createConnection({
@@ -17,7 +17,7 @@ module.exports = function () {
   dbConnection.connect((err) => {
     if (err) {
       console.log('No database connection extablished')
-      return 
+      process.exit(1) 
     }
     console.log('Connection established')
   })
