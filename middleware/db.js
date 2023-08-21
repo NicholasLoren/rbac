@@ -1,11 +1,13 @@
 const mysql = require('mysql')
 const { database } = require('../startup/config')()
-
+const logger = require("../startup/logger")()
 
 module.exports = function (req, res, next) {
-    console.log("Establishing database connection...")
+    logger.log({level:"info",message:"Establishing database connection..."})
     if (!database) { 
-      return res.status(500).send("Internal server error, No database connection can be made")
+      throw new Error(
+        'Internal server error, No database connection can be made'
+      )
     }
 
     const dbConnection = mysql.createConnection({
@@ -13,15 +15,18 @@ module.exports = function (req, res, next) {
       user: database.user,
       password: database.password,
       database: database.name,
-    })
+    }) 
 
     dbConnection.connect((err) => {
       if (err) { 
-        return res.send(500).send('No database connection extablished')
+        throw new Error('No database connection extablished')
       } 
     })
-
-    console.log("Database connection established!")
+ 
+    logger.log({
+      level: 'info',
+      message: 'Database connection established!',
+    })
     next()
 
 }

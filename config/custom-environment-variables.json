@@ -5,6 +5,7 @@
     "user": "rbac_db_user",
     "name": "rbac_db_name"
   },
-  "jwtPrivateKey":"rbac_jwtPrivateKey"
+  "jwtPrivateKey":"rbac_jwtPrivateKey",
+  "NODE_ENV":"rbac_environment"
 }
  

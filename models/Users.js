@@ -115,7 +115,7 @@ class Users {
   }
 
   //::: LOGIN USER :::
-  login(user, callback) {
+  login(user, callback) { 
     const {email,password} = this.validateSchema 
     const validation = this.validate(user,{email,password}, { allowUnknown: true })
     //validate email and password
@@ -174,7 +174,7 @@ class Users {
   }
 
   //::: GENERATE USER AUTH TOKEN :::
-  generateAuthToken(user) {
+  generateAuthToken(user) { 
     const secret = jwtPrivateKey
     if (!secret) throw new Error('No private key found for jwt')
 
